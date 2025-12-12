@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Management Visualization & Simulation Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #32a8c6 0%, #2980b9 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f5f5f5;
+            border-bottom: 3px solid #32a8c6;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            background: transparent;
+            color: #555;
+        }
+
+        .tab:hover {
+            background: rgba(50, 168, 198, 0.1);
+        }
+
+        .tab.active {
+            background: white;
+            color: #32a8c6;
+            border-bottom: 3px solid #32a8c6;
+            margin-bottom: -3px;
+        }
+
+        .content {
+            display: none;
+            padding: 30px;
+        }
+
+        .content.active {
+            display: block;
+        }
+
+        .module-layout {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            gap: 20px;
+            min-height: 700px;
+        }
+
+        .control-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .control-panel h3 {
+            color: #32a8c6;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .control-group input,
+        .control-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .control-group input:focus,
+        .control-group select:focus {
+            outline: none;
+            border-color: #32a8c6;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(34, 197, 94, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(100, 116, 139, 0.4);
+        }
+
+        .visualization-area {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            border: 2px solid #e5e5e5;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fafafa;
+        }
+
+        canvas {
+            display: block;
+            cursor: crosshair;
+        }
+
+        .info-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-panel h3 {
+            color: #32a8c6;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .stats-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #32a8c6;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .legend {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .legend-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .page-table {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .page-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .page-table th {
+            background: #32a8c6;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+        }
+
+        .page-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .page-table tr:hover {
+            background: #f0f9ff;
+        }
+
+        .slider-container {
+            margin: 20px 0;
+        }
+
+        .slider-container input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .slider-value {
+            text-align: center;
+            font-weight: 600;
+            color: #32a8c6;
+        }
+
+        .demo-buttons {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #ddd;
+        }
+
+        .demo-buttons h4 {
+            margin-bottom: 10px;
+            color: #555;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+        }
+
+        .address-translation {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .address-translation h4 {
+            color: #32a8c6;
+            margin-bottom: 10px;
+        }
+
+        .translation-result {
+            background: #f0f9ff;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 1400px) {
+            .module-layout {
+                grid-template-columns: 280px 1fr 320px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .module-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧠 Memory Management Visualization Tool</h1>
+            <p>Interactive simulation of OS memory management techniques</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('paging')">📄 Paging</button>
+            <button class="tab" onclick="switchTab('segmentation')">📊 Segmentation</button>
+            <button class="tab" onclick="switchTab('virtual')">💾 Virtual Memory</button>
+        </div>
+
+        <!-- Paging Module -->
+        <div id="paging" class="content active">
+            <div class="module-layout">
+                <div class="control-panel">
+                    <h3>Configuration</h3>
+                    <div class="control-group">
+                        <label>Physical Memory (MB)</label>
+                        <select id="paging-memory-size" onchange="initPaging()">
+                            <option value="128">128 MB</option>
+                            <option value="256" selected>256 MB</option>
+                            <option value="512">512 MB</option>
+                            <option value="1024">1024 MB</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Page/Frame Size</label>
+                        <select id="paging-page-size" onchange="initPaging()">
+                            <option value="4">4 KB</option>
+                            <option value="8">8 KB</option>
+                            <option value="16">16 KB</option>
+                            <option value="64">64 KB</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Process Name</label>
+                        <input type="text" id="paging-process-name" placeholder="e.g., P1" value="P1">
+                    </div>
+                    <div class="control-group">
+                        <label>Process Size (MB)</label>
+                        <input type="number" id="paging-process-size" min="1" max="512" value="50">
+                    </div>
+                    <button class="btn btn-primary" onclick="allocateProcess()">Allocate Process</button>
+                    <button class="btn btn-danger" onclick="deallocateProcess()">Deallocate Last</button>
+                    <button class="btn btn-secondary" onclick="resetPaging()">Reset All</button>
+                    
+                    <div class="address-translation">
+                        <h4>Address Translation</h4>
+                        <div class="control-group">
+                            <label>Logical Address (hex)</label>
+                            <input type="text" id="logical-address" placeholder="0x5c4a7">
+                        </div>
+                        <button class="btn btn-success" onclick="translateAddress()">Translate</button>
+                        <div class="translation-result" id="translation-result"></div>
+                    </div>
+
+                    <div class="demo-buttons">
+                        <h4>Demo Scenarios</h4>
+                        <button class="btn btn-secondary" onclick="loadDemo('light')">Light Load</button>
+                        <button class="btn btn-secondary" onclick="loadDemo('heavy')">Heavy Load</button>
+                    </div>
+                </div>
+
+                <div class="visualization-area">
+                    <h3>Memory Visualization</h3>
+                    <div class="canvas-container">
+                        <canvas id="paging-canvas"></canvas>
+                    </div>
+                </div>
+
+                <div class="info-panel">
+                    <h3>Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Total Frames</div>
+                            <div class="stat-value" id="total-frames">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Used Frames</div>
+                            <div class="stat-value" id="used-frames">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Memory Usage</div>
+                            <div class="stat-value" id="memory-usage">0%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Active Processes</div>
+                            <div class="stat-value" id="active-processes">0</div>
+                        </div>
+                    </div>
+
+                    <div class="legend">
+                        <div class="legend-title">Legend</div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #3b82f6;"></div>
+                            <span>Process P1</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #22c55e;"></div>
+                            <span>Process P2</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ef4444;"></div>
+                            <span>Process P3</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #e5e5e5;"></div>
+                            <span>Free</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #fbbf24;"></div>
+                            <span>Highlighted</span>
+                        </div>
+                    </div>
+
+                    <div class="page-table">
+                        <table id="page-table-display">
+                            <thead>
+                                <tr>
+                                    <th>Page#</th>
+                                    <th>Frame#</th>
+                                    <th>Valid</th>
+                                    <th>Process</th>
+                                </tr>
+                            </thead>
+                            <tbody id="page-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Segmentation Module -->
+        <div id="segmentation" class="content">
+            <div class="module-layout">
+                <div class="control-panel">
+                    <h3>Segment Control</h3>
+                    <div class="control-group">
+                        <label>Segment Type</label>
+                        <select id="segment-type">
+                            <option value="code">Code</option>
+                            <option value="stack">Stack</option>
+                            <option value="data">Data</option>
+                            <option value="heap">Heap</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Segment Size (MB)</label>
+                        <input type="number" id="segment-size" min="1" max="100" value="20">
+                    </div>
+                    <div class="control-group">
+                        <label>Process ID</label>
+                        <input type="text" id="segment-process-id" placeholder="e.g., P1" value="P1">
+                    </div>
+                    <button class="btn btn-primary" onclick="addSegment()">Add Segment</button>
+                    <button class="btn btn-danger" onclick="removeSegment()">Remove Last</button>
+                    <button class="btn btn-success" onclick="compactMemory()">Compact Memory</button>
+                    <button class="btn btn-secondary" onclick="resetSegmentation()">Reset All</button>
+
+                    <div class="demo-buttons">
+                        <h4>Demo Scenarios</h4>
+                        <button class="btn btn-secondary" onclick="loadSegmentDemo('fragmentation')">Fragmentation</button>
+                        <button class="btn btn-secondary" onclick="loadSegmentDemo('normal')">Normal Load</button>
+                    </div>
+                </div>
+
+                <div class="visualization-area">
+                    <h3>Segmentation Visualization</h3>
+                    <div class="canvas-container">
+                        <canvas id="segmentation-canvas"></canvas>
+                    </div>
+                </div>
+
+                <div class="info-panel">
+                    <h3>Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Total Memory</div>
+                            <div class="stat-value" id="seg-total-memory">256 MB</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Used Memory</div>
+                            <div class="stat-value" id="seg-used-memory">0 MB</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Fragmentation</div>
+                            <div class="stat-value" id="seg-fragmentation">0%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Segments</div>
+                            <div class="stat-value" id="seg-count">0</div>
+                        </div>
+                    </div>
+
+                    <div class="legend">
+                        <div class="legend-title">Segment Types</div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #3b82f6;"></div>
+                            <span>Code</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #22c55e;"></div>
+                            <span>Data</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ef4444;"></div>
+                            <span>Stack</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #f59e0b;"></div>
+                            <span>Heap</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #e5e5e5;"></div>
+                            <span>Free</span>
+                        </div>
+                    </div>
+
+                    <div class="page-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Seg#</th>
+                                    <th>Base</th>
+                                    <th>Limit</th>
+                                    <th>Type</th>
+                                </tr>
+                            </thead>
+                            <tbody id="segment-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Virtual Memory Module -->
+        <div id="virtual" class="content">
+            <div class="module-layout">
+                <div class="control-panel">
+                    <h3>Virtual Memory Control</h3>
+                    <div class="control-group">
+                        <label>Page Replacement Algorithm</label>
+                        <select id="replacement-algorithm">
+                            <option value="fifo">FIFO</option>
+                            <option value="lru">LRU</option>
+                            <option value="optimal">Optimal</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Physical Frames</label>
+                        <input type="number" id="vm-frames" min="4" max="32" value="8">
+                    </div>
+                    <div class="control-group">
+                        <label>Virtual Pages</label>
+                        <input type="number" id="vm-pages" min="8" max="64" value="16">
+                    </div>
+                    <button class="btn btn-primary" onclick="initVirtualMemory()">Initialize</button>
+                    <button class="btn btn-success" onclick="simulateAccess()">Simulate Access</button>
+                    <button class="btn btn-secondary" onclick="resetVirtualMemory()">Reset</button>
+
+                    <div class="slider-container">
+                        <label>Animation Speed</label>
+                        <input type="range" id="animation-speed" min="1" max="10" value="5">
+                        <div class="slider-value" id="speed-value">5x</div>
+                    </div>
+
+                    <div class="control-group" style="margin-top: 20px;">
+                        <button class="btn btn-primary" onclick="autoSimulate()">Auto Simulate</button>
+                        <button class="btn btn-danger" onclick="stopSimulation()">Stop</button>
+                    </div>
+
+                    <div class="demo-buttons">
+                        <h4>Demo Scenarios</h4>
+                        <button class="btn btn-secondary" onclick="loadVMDemo('compare')">Compare Algorithms</button>
+                    </div>
+                </div>
+
+                <div class="visualization-area">
+                    <h3>Virtual Memory Visualization</h3>
+                    <div class="canvas-container">
+                        <canvas id="virtual-canvas"></canvas>
+                    </div>
+                </div>
+
+                <div class="info-panel">
+                    <h3>Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Page Faults</div>
+                            <div class="stat-value" id="page-faults">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Page Hits</div>
+                            <div class="stat-value" id="page-hits">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Hit Ratio</div>
+                            <div class="stat-value" id="hit-ratio">0%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Accesses</div>
+                            <div class="stat-value" id="total-accesses">0</div>
+                        </div>
+                    </div>
+
+                    <div class="legend">
+                        <div class="legend-title">Memory Status</div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #3b82f6;"></div>
+                            <span>In RAM</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #1e293b;"></div>
+                            <span>On Disk</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #fbbf24;"></div>
+                            <span>Recently Accessed</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #e5e5e5;"></div>
+                            <span>Free Frame</span>
+                        </div>
+                    </div>
+
+                    <div class="page-table">
+                        <h4 style="padding: 10px; background: #32a8c6; color: white; margin: 0;">Access History</h4>
+                        <div id="access-history" style="padding: 10px; max-height: 200px; overflow-y: auto; font-family: monospace; font-size: 0.9em;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        // Global State
+        let currentTab = 'paging';
+        let pagingState = {
+            memorySize: 256,
+            pageSize: 4,
+            totalFrames: 0,
+            frames: [],
+            processes: [],
+            pageTable: [],
+            nextProcessId: 1
+        };
+
+        let segmentationState = {
+            memorySize: 256,
+            segments: [],
+            nextSegmentId: 0
+        };
+
+        let virtualMemoryState = {
+            physicalFrames: 8,
+            virtualPages: 16,
+            frameTable: [],
+            pageTable: [],
+            algorithm: 'fifo',
+            pageFaults: 0,
+            pageHits: 0,
+            accessHistory: [],
+            simulationRunning: false
+        };
+
+        const processColors = ['#3b82f6', '#22c55e', '#ef4444', '#f59e0b', '#8b5cf6', '#ec4899'];
+        const segmentColors = {
+            code: '#3b82f6',
+            data: '#22c55e',
+            stack: '#ef4444',
+            heap: '#f59e0b'
+        };
+
+        // Tab Switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            currentTab = tabName;
+
+            if (tabName === 'paging') {
+                initPaging();
+            } else if (tabName === 'segmentation') {
+                initSegmentation();
+            } else if (tabName === 'virtual') {
+                initVirtualMemory();
+            }
+        }
+
+        // PAGING MODULE
+        function initPaging() {
+            pagingState.memorySize = parseInt(document.getElementById('paging-memory-size').value);
+            pagingState.pageSize = parseInt(document.getElementById('paging-page-size').value);
+            pagingState.totalFrames = Math.floor((pagingState.memorySize * 1024) / pagingState.pageSize);
+            pagingState.frames = new Array(pagingState.totalFrames).fill(null);
+            pagingState.processes = [];
+            pagingState.pageTable = [];
+            pagingState.nextProcessId = 1;
+
+            updatePagingStats();
+            drawPaging();
+        }
+
+        function allocateProcess() {
+            const name = document.getElementById('paging-process-name').value || `P${pagingState.nextProcessId}`;
+            const sizeMB = parseInt(document.getElementById('paging-process-size').value);
+            
+            if (!sizeMB || sizeMB <= 0) {
+                alert('Please enter a valid process size');
+                return;
+            }
+
+            const pagesNeeded = Math.ceil((sizeMB * 1024) / pagingState.pageSize);
+            const freeFrames = pagingState.frames.reduce((acc, frame, idx) => {
+                if (frame === null) acc.push(idx);
+                return acc;
+            }, []);
+
+            if (freeFrames.length < pagesNeeded) {
+                alert(`Not enough free frames! Need ${pagesNeeded}, have ${freeFrames.length}`);
+                return;
+            }
+
+            const process = {
+                id: pagingState.nextProcessId,
+                name: name,
+                size: sizeMB,
+                pages: [],
+                color: processColors[(pagingState.nextProcessId - 1) % processColors.length]
+            };
+
+            for (let i = 0; i < pagesNeeded; i++) {
+                const frameIdx = freeFrames[i];
+                pagingState.frames[frameIdx] = process.id;
+                process.pages.push(frameIdx);
+                
+                pagingState.pageTable.push({
+                    processId: process.id,
+                    processName: name,
+                    pageNum: i,
+                    frameNum: frameIdx,
+                    valid: true,
+                    dirty: false
+                });
+            }
+
+            pagingState.processes.push(process);
+            pagingState.nextProcessId++;
+
+            updatePagingStats();
+            updatePageTable();
+            drawPaging();
+        }
+
+        function deallocateProcess() {
+            if (pagingState.processes.length === 0) {
+                alert('No processes to deallocate');
+                return;
+            }
+
+            const process = pagingState.processes.pop();
+            process.pages.forEach(frameIdx => {
+                pagingState.frames[frameIdx] = null;
+            });
+
+            pagingState.pageTable = pagingState.pageTable.filter(entry => entry.processId !== process.id);
+
+            updatePagingStats();
+            updatePageTable();
+            drawPaging();
+        }
+
+        function resetPaging() {
+            initPaging();
+            document.getElementById('translation-result').innerHTML = '';
+        }
+
+        function translateAddress() {
+            const input = document.getElementById('logical-address').value.trim();
+            if (!input) {
+                alert('Please enter a logical address');
+                return;
+            }
+
+            let address;
+            if (input.startsWith('0x')) {
+                address = parseInt(input, 16);
+            } else {
+                address = parseInt(input);
+            }
+
+            if (isNaN(address)) {
+                alert('Invalid address format');
+                return;
+            }
+
+            const pageSize = pagingState.pageSize * 1024;
+            const pageNum = Math.floor(address / pageSize);
+            const offset = address % pageSize;
+
+            const pageEntry = pagingState.pageTable.find(entry => entry.pageNum === pageNum);
+
+            let result = `<strong>Logical Address:</strong> 0x${address.toString(16).toUpperCase()}<br>`;
+            result += `<strong>Page Number:</strong> ${pageNum} (0x${pageNum.toString(16).toUpperCase()})<br>`;
+            result += `<strong>Offset:</strong> ${offset} (0x${offset.toString(16).toUpperCase()})<br><br>`;
+
+            if (pageEntry && pageEntry.valid) {
+                const physicalAddress = (pageEntry.frameNum * pageSize) + offset;
+                result += `<strong>Frame Number:</strong> ${pageEntry.frameNum}<br>`;
+                result += `<strong>Physical Address:</strong> 0x${physicalAddress.toString(16).toUpperCase()}<br>`;
+                result += `<strong>Process:</strong> ${pageEntry.processName}<br>`;
+                result += `<span style="color: #22c55e;">✓ Translation Successful</span>`;
+                
+                // Highlight on canvas
+                drawPaging(pageEntry.frameNum);
+            } else {
+                result += `<span style="color: #ef4444;">✗ Page Fault - Page not in memory</span>`;
+            }
+
+            document.getElementById('translation-result').innerHTML = result;
+        }
+
+        function updatePagingStats() {
+            const usedFrames = pagingState.frames.filter(f => f !== null).length;
+            const usagePercent = ((usedFrames / pagingState.totalFrames) * 100).toFixed(1);
+
+            document.getElementById('total-frames').textContent = pagingState.totalFrames;
+            document.getElementById('used-frames').textContent = usedFrames;
+            document.getElementById('memory-usage').textContent = usagePercent + '%';
+            document.getElementById('active-processes').textContent = pagingState.processes.length;
+        }
+
+        function updatePageTable() {
+            const tbody = document.getElementById('page-table-body');
+            tbody.innerHTML = '';
+
+            pagingState.pageTable.slice(0, 50).forEach(entry => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${entry.pageNum}</td>
+                    <td>${entry.frameNum}</td>
+                    <td>${entry.valid ? '✓' : '✗'}</td>
+                    <td>${entry.processName}</td>
+                `;
+            });
+
+            if (pagingState.pageTable.length > 50) {
+                const row = tbody.insertRow();
+                row.innerHTML = `<td colspan="4" style="text-align: center; color: #666;">... and ${pagingState.pageTable.length - 50} more entries</td>`;
+            }
+        }
+
+        function drawPaging(highlightFrame = null) {
+            const canvas = document.getElementById('paging-canvas');
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            const ctx = canvas.getContext('2d');
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw title
+            ctx.font = 'bold 16px sans-serif';
+            ctx.fillStyle = '#333';
+            ctx.fillText('Physical Memory (Frames)', 20, 30);
+
+            // Calculate grid
+            const startY = 50;
+            const availableHeight = canvas.height - startY - 20;
+            const cols = Math.min(32, Math.ceil(Math.sqrt(pagingState.totalFrames)));
+            const rows = Math.ceil(pagingState.totalFrames / cols);
+            const cellWidth = Math.min(30, (canvas.width - 40) / cols);
+            const cellHeight = Math.min(30, availableHeight / rows);
+
+            // Draw frames
+            for (let i = 0; i < pagingState.totalFrames; i++) {
+                const row = Math.floor(i / cols);
+                const col = i % cols;
+                const x = 20 + col * cellWidth;
+                const y = startY + row * cellHeight;
+
+                const processId = pagingState.frames[i];
+                let color = '#e5e5e5';
+
+                if (processId !== null) {
+                    const process = pagingState.processes.find(p => p.id === processId);
+                    if (process) {
+                        color = process.color;
+                    }
+                }
+
+                if (i === highlightFrame) {
+                    color = '#fbbf24';
+                }
+
+                ctx.fillStyle = color;
+                ctx.fillRect(x, y, cellWidth - 2, cellHeight - 2);
+                ctx.strokeStyle = '#999';
+                ctx.strokeRect(x, y, cellWidth - 2, cellHeight - 2);
+            }
+
+            // Draw process legend
+            let legendY = startY;
+            pagingState.processes.forEach((process, idx) => {
+                const x = canvas.width - 150;
+                const y = legendY + idx * 25;
+
+                ctx.fillStyle = process.color;
+                ctx.fillRect(x, y, 20, 20);
+                ctx.strokeStyle = '#999';
+                ctx.strokeRect(x, y, 20, 20);
+
+                ctx.fillStyle = '#333';
+                ctx.font = '12px sans-serif';
+                ctx.fillText(`${process.name} (${process.size}MB)`, x + 25, y + 15);
+            });
+        }
+
+        function loadDemo(type) {
+            resetPaging();
+            
+            if (type === 'light') {
+                document.getElementById('paging-process-name').value = 'P1';
+                document.getElementById('paging-process-size').value = '30';
+                allocateProcess();
+                
+                setTimeout(() => {
+                    document.getElementById('paging-process-name').value = 'P2';
+                    document.getElementById('paging-process-size').value = '20';
+                    allocateProcess();
+                }, 300);
+            } else if (type === 'heavy') {
+                const sizes = [40, 35, 30, 25, 20];
+                sizes.forEach((size, idx) => {
+                    setTimeout(() => {
+                        document.getElementById('paging-process-name').value = `P${idx + 1}`;
+                        document.getElementById('paging-process-size').value = size;
+                        allocateProcess();
+                    }, idx * 300);
+                });
+            }
+        }
+
+        // SEGMENTATION MODULE
+        function initSegmentation() {
+            segmentationState.segments = [];
+            segmentationState.nextSegmentId = 0;
+            updateSegmentationStats();
+            drawSegmentation();
+        }
+
+        function addSegment() {
+            const type = document.getElementById('segment-type').value;
+            const size = parseInt(document.getElementById('segment-size').value);
+            const processId = document.getElementById('segment-process-id').value || 'P1';
+
+            if (!size || size <= 0) {
+                alert('Please enter a valid segment size');
+                return;
+            }
+
+            const usedMemory = segmentationState.segments.reduce((sum, seg) => sum + seg.size, 0);
+            if (usedMemory + size > segmentationState.memorySize) {
+                alert('Not enough memory available');
+                return;
+            }
+
+            // Find first fit
+            let baseAddr = 0;
+            const sortedSegments = [...segmentationState.segments].sort((a, b) => a.baseAddr - b.baseAddr);
+            
+            for (let seg of sortedSegments) {
+                if (seg.baseAddr - baseAddr >= size) {
+                    break;
+                }
+                baseAddr = seg.baseAddr + seg.size;
+            }
+
+            if (baseAddr + size > segmentationState.memorySize) {
+                alert('Cannot allocate segment - memory fragmented');
+                return;
+            }
+
+            const segment = {
+                id: segmentationState.nextSegmentId++,
+                type: type,
+                processId: processId,
+                baseAddr: baseAddr,
+                size: size,
+                limit: baseAddr + size,
+                color: segmentColors[type]
+            };
+
+            segmentationState.segments.push(segment);
+            updateSegmentationStats();
+            updateSegmentTable();
+            drawSegmentation();
+        }
+
+        function removeSegment() {
+            if (segmentationState.segments.length === 0) {
+                alert('No segments to remove');
+                return;
+            }
+
+            segmentationState.segments.pop();
+            updateSegmentationStats();
+            updateSegmentTable();
+            drawSegmentation();
+        }
+
+        function compactMemory() {
+            let currentAddr = 0;
+            segmentationState.segments.forEach(seg => {
+                seg.baseAddr = currentAddr;
+                seg.limit = currentAddr + seg.size;
+                currentAddr += seg.size;
+            });
+
+            updateSegmentationStats();
+            updateSegmentTable();
+            drawSegmentation();
+        }
+
+        function resetSegmentation() {
+            initSegmentation();
+        }
+
+        function updateSegmentationStats() {
+            const usedMemory = segmentationState.segments.reduce((sum, seg) => sum + seg.size, 0);
+            
+            // Calculate fragmentation
+            const sortedSegments = [...segmentationState.segments].sort((a, b) => a.baseAddr - b.baseAddr);
+            let fragments = 0;
+            let fragmentSize = 0;
+            let lastEnd = 0;
+
+            sortedSegments.forEach(seg => {
+                if (seg.baseAddr > lastEnd) {
+                    fragments++;
+                    fragmentSize += seg.baseAddr - lastEnd;
+                }
+                lastEnd = seg.limit;
+            });
+
+            const fragPercent = usedMemory > 0 ? ((fragmentSize / segmentationState.memorySize) * 100).toFixed(1) : 0;
+
+            document.getElementById('seg-total-memory').textContent = segmentationState.memorySize + ' MB';
+            document.getElementById('seg-used-memory').textContent = usedMemory + ' MB';
+            document.getElementById('seg-fragmentation').textContent = fragPercent + '%';
+            document.getElementById('seg-count').textContent = segmentationState.segments.length;
+        }
+
+        function updateSegmentTable() {
+            const tbody = document.getElementById('segment-table-body');
+            tbody.innerHTML = '';
+
+            segmentationState.segments.forEach(seg => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${seg.id}</td>
+                    <td>${seg.baseAddr} MB</td>
+                    <td>${seg.size} MB</td>
+                    <td>${seg.type}</td>
+                `;
+            });
+        }
+
+        function drawSegmentation() {
+            const canvas = document.getElementById('segmentation-canvas');
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            const ctx = canvas.getContext('2d');
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw titles
+            ctx.font = 'bold 16px sans-serif';
+            ctx.fillStyle = '#333';
+            ctx.fillText('Physical Memory', 20, 30);
+
+            const memoryWidth = canvas.width - 60;
+            const memoryHeight = canvas.height - 80;
+            const memoryX = 30;
+            const memoryY = 50;
+
+            // Draw memory container
+            ctx.strokeStyle = '#999';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(memoryX, memoryY, memoryWidth, memoryHeight);
+
+            // Draw segments
+            segmentationState.segments.forEach(seg => {
+                const segY = memoryY + (seg.baseAddr / segmentationState.memorySize) * memoryHeight;
+                const segHeight = (seg.size / segmentationState.memorySize) * memoryHeight;
+
+                ctx.fillStyle = seg.color;
+                ctx.fillRect(memoryX, segY, memoryWidth, segHeight);
+                ctx.strokeStyle = '#666';
+                ctx.strokeRect(memoryX, segY, memoryWidth, segHeight);
+
+                // Draw label
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 12px sans-serif';
+                const label = `${seg.processId}-${seg.type} (${seg.size}MB)`;
+                const textWidth = ctx.measureText(label).width;
+                if (segHeight > 20) {
+                    ctx.fillText(label, memoryX + (memoryWidth - textWidth) / 2, segY + segHeight / 2 + 5);
+                }
+            });
+
+            // Draw free space indicators
+            const sortedSegments = [...segmentationState.segments].sort((a, b) => a.baseAddr - b.baseAddr);
+            let lastEnd = 0;
+
+            sortedSegments.forEach(seg => {
+                if (seg.baseAddr > lastEnd) {
+                    const freeY = memoryY + (lastEnd / segmentationState.memorySize) * memoryHeight;
+                    const freeHeight = ((seg.baseAddr - lastEnd) / segmentationState.memorySize) * memoryHeight;
+                    
+                    ctx.fillStyle = '#e5e5e5';
+                    ctx.fillRect(memoryX, freeY, memoryWidth, freeHeight);
+                    
+                    ctx.fillStyle = '#999';
+                    ctx.font = '11px sans-serif';
+                    if (freeHeight > 15) {
+                        ctx.fillText(`Free: ${seg.baseAddr - lastEnd}MB`, memoryX + 10, freeY + freeHeight / 2);
+                    }
+                }
+                lastEnd = seg.limit;
+            });
+
+            // Draw remaining free space
+            if (lastEnd < segmentationState.memorySize) {
+                const freeY = memoryY + (lastEnd / segmentationState.memorySize) * memoryHeight;
+                const freeHeight = ((segmentationState.memorySize - lastEnd) / segmentationState.memorySize) * memoryHeight;
+                
+                ctx.fillStyle = '#e5e5e5';
+                ctx.fillRect(memoryX, freeY, memoryWidth, freeHeight);
+                
+                ctx.fillStyle = '#999';
+                ctx.font = '11px sans-serif';
+                if (freeHeight > 15) {
+                    ctx.fillText(`Free: ${segmentationState.memorySize - lastEnd}MB`, memoryX + 10, freeY + freeHeight / 2);
+                }
+            }
+        }
+
+        function loadSegmentDemo(type) {
+            resetSegmentation();
+
+            if (type === 'fragmentation') {
+                const segments = [
+                    {type: 'code', size: 30, process: 'P1'},
+                    {type: 'data', size: 20, process: 'P1'},
+                    {type: 'stack', size: 25, process: 'P2'},
+                    {type: 'heap', size: 15, process: 'P2'},
+                    {type: 'code', size: 20, process: 'P3'}
+                ];
+
+                segments.forEach((seg, idx) => {
+                    setTimeout(() => {
+                        document.getElementById('segment-type').value = seg.type;
+                        document.getElementById('segment-size').value = seg.size;
+                        document.getElementById('segment-process-id').value = seg.process;
+                        addSegment();
+                    }, idx * 300);
+                });
+
+                setTimeout(() => {
+                    removeSegment();
+                    setTimeout(() => removeSegment(), 300);
+                }, segments.length * 300 + 500);
+
+            } else if (type === 'normal') {
+                const segments = [
+                    {type: 'code', size: 40, process: 'P1'},
+                    {type: 'data', size: 30, process: 'P1'},
+                    {type: 'stack', size: 20, process: 'P1'}
+                ];
+
+                segments.forEach((seg, idx) => {
+                    setTimeout(() => {
+                        document.getElementById('segment-type').value = seg.type;
+                        document.getElementById('segment-size').value = seg.size;
+                        document.getElementById('segment-process-id').value = seg.process;
+                        addSegment();
+                    }, idx * 300);
+                });
+            }
+        }
+
+        // VIRTUAL MEMORY MODULE
+        function initVirtualMemory() {
+            virtualMemoryState.physicalFrames = parseInt(document.getElementById('vm-frames').value) || 8;
+            virtualMemoryState.virtualPages = parseInt(document.getElementById('vm-pages').value) || 16;
+            virtualMemoryState.algorithm = document.getElementById('replacement-algorithm').value;
+            virtualMemoryState.frameTable = new Array(virtualMemoryState.physicalFrames).fill(null);
+            virtualMemoryState.pageTable = [];
+            virtualMemoryState.pageFaults = 0;
+            virtualMemoryState.pageHits = 0;
+            virtualMemoryState.accessHistory = [];
+            virtualMemoryState.fifoQueue = [];
+            virtualMemoryState.lruQueue = [];
+
+            for (let i = 0; i < virtualMemoryState.virtualPages; i++) {
+                virtualMemoryState.pageTable.push({
+                    pageNum: i,
+                    frameNum: null,
+                    inMemory: false,
+                    lastAccess: 0
+                });
+            }
+
+            updateVMStats();
+            drawVirtualMemory();
+        }
+
+        function simulateAccess() {
+            const pageNum = Math.floor(Math.random() * virtualMemoryState.virtualPages);
+            accessPage(pageNum);
+        }
+
+        function accessPage(pageNum) {
+            const page = virtualMemoryState.pageTable[pageNum];
+            const algorithm = virtualMemoryState.algorithm;
+
+            if (page.inMemory) {
+                // Page hit
+                virtualMemoryState.pageHits++;
+                page.lastAccess = Date.now();
+                
+                if (algorithm === 'lru') {
+                    const idx = virtualMemoryState.lruQueue.indexOf(pageNum);
+                    if (idx > -1) {
+                        virtualMemoryState.lruQueue.splice(idx, 1);
+                    }
+                    virtualMemoryState.lruQueue.push(pageNum);
+                }
+
+                addAccessLog(`✓ HIT: Page ${pageNum} (Frame ${page.frameNum})`);
+            } else {
+                // Page fault
+                virtualMemoryState.pageFaults++;
+                
+                const freeFrame = virtualMemoryState.frameTable.indexOf(null);
+                
+                if (freeFrame !== -1) {
+                    // Free frame available
+                    virtualMemoryState.frameTable[freeFrame] = pageNum;
+                    page.frameNum = freeFrame;
+                    page.inMemory = true;
+                    page.lastAccess = Date.now();
+                    
+                    if (algorithm === 'fifo') {
+                        virtualMemoryState.fifoQueue.push(pageNum);
+                    } else if (algorithm === 'lru') {
+                        virtualMemoryState.lruQueue.push(pageNum);
+                    }
+
+                    addAccessLog(`✗ FAULT: Page ${pageNum} → Frame ${freeFrame}`);
+                } else {
+                    // Need to replace a page
+                    let victimPage;
+
+                    if (algorithm === 'fifo') {
+                        victimPage = virtualMemoryState.fifoQueue.shift();
+                        virtualMemoryState.fifoQueue.push(pageNum);
+                    } else if (algorithm === 'lru') {
+                        victimPage = virtualMemoryState.lruQueue.shift();
+                        virtualMemoryState.lruQueue.push(pageNum);
+                    } else if (algorithm === 'optimal') {
+                        // Simplified optimal - replace random for demo
+                        victimPage = virtualMemoryState.frameTable[Math.floor(Math.random() * virtualMemoryState.physicalFrames)];
+                    }
+
+                    const victimPageEntry = virtualMemoryState.pageTable[victimPage];
+                    const victimFrame = victimPageEntry.frameNum;
+
+                    victimPageEntry.inMemory = false;
+                    victimPageEntry.frameNum = null;
+
+                    virtualMemoryState.frameTable[victimFrame] = pageNum;
+                    page.frameNum = victimFrame;
+                    page.inMemory = true;
+                    page.lastAccess = Date.now();
+
+                    addAccessLog(`✗ FAULT: Page ${pageNum} → Frame ${victimFrame} (replaced Page ${victimPage})`);
+                }
+            }
+
+            updateVMStats();
+            drawVirtualMemory(pageNum);
+        }
+
+        function addAccessLog(message) {
+            virtualMemoryState.accessHistory.unshift(message);
+            if (virtualMemoryState.accessHistory.length > 100) {
+                virtualMemoryState.accessHistory.pop();
+            }
+
+            const historyDiv = document.getElementById('access-history');
+            historyDiv.innerHTML = virtualMemoryState.accessHistory.slice(0, 20).join('<br>');
+        }
+
+        function updateVMStats() {
+            const total = virtualMemoryState.pageFaults + virtualMemoryState.pageHits;
+            const hitRatio = total > 0 ? ((virtualMemoryState.pageHits / total) * 100).toFixed(1) : 0;
+
+            document.getElementById('page-faults').textContent = virtualMemoryState.pageFaults;
+            document.getElementById('page-hits').textContent = virtualMemoryState.pageHits;
+            document.getElementById('hit-ratio').textContent = hitRatio + '%';
+            document.getElementById('total-accesses').textContent = total;
+        }
+
+        function drawVirtualMemory(highlightPage = null) {
+            const canvas = document.getElementById('virtual-canvas');
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            const ctx = canvas.getContext('2d');
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const leftWidth = canvas.width * 0.45;
+            const rightWidth = canvas.width * 0.45;
+            const gap = canvas.width * 0.1;
+
+            // Draw Virtual Memory (left)
+            ctx.font = 'bold 14px sans-serif';
+            ctx.fillStyle = '#333';
+            ctx.fillText('Virtual Memory', 20, 25);
+
+            const pageHeight = Math.min(35, (canvas.height - 60) / virtualMemoryState.virtualPages);
+            
+            virtualMemoryState.pageTable.forEach((page, idx) => {
+                const y = 40 + idx * pageHeight;
+                const color = page.inMemory ? '#3b82f6' : '#1e293b';
+                const highlightColor = idx === highlightPage ? '#fbbf24' : color;
+
+                ctx.fillStyle = highlightColor;
+                ctx.fillRect(20, y, leftWidth - 40, pageHeight - 2);
+                ctx.strokeStyle = '#666';
+                ctx.strokeRect(20, y, leftWidth - 40, pageHeight - 2);
+
+                ctx.fillStyle = 'white';
+                ctx.font = '11px sans-serif';
+                ctx.fillText(`Page ${idx}${page.inMemory ? ` → F${page.frameNum}` : ' (Disk)'}`, 30, y + pageHeight / 2 + 4);
+            });
+
+            // Draw Physical Memory (right)
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.fillText('Physical Memory (RAM)', leftWidth + gap, 25);
+
+            const frameHeight = Math.min(50, (canvas.height - 60) / virtualMemoryState.physicalFrames);
+
+            virtualMemoryState.frameTable.forEach((pageNum, frameIdx) => {
+                const y = 40 + frameIdx * frameHeight;
+                const color = pageNum !== null ? '#3b82f6' : '#e5e5e5';
+
+                ctx.fillStyle = color;
+                ctx.fillRect(leftWidth + gap, y, rightWidth - 20, frameHeight - 2);
+                ctx.strokeStyle = '#666';
+                ctx.strokeRect(leftWidth + gap, y, rightWidth - 20, frameHeight - 2);
+
+                ctx.fillStyle = pageNum !== null ? 'white' : '#999';
+                ctx.font = '12px sans-serif';
+                const label = pageNum !== null ? `Frame ${frameIdx}: Page ${pageNum}` : `Frame ${frameIdx}: Empty`;
+                ctx.fillText(label, leftWidth + gap + 10, y + frameHeight / 2 + 4);
+            });
+        }
+
+        function autoSimulate() {
+            if (virtualMemoryState.simulationRunning) return;
+            
+            virtualMemoryState.simulationRunning = true;
+            const speed = parseInt(document.getElementById('animation-speed').value);
+            const interval = 1000 / speed;
+
+            virtualMemoryState.simulationInterval = setInterval(() => {
+                if (!virtualMemoryState.simulationRunning) {
+                    clearInterval(virtualMemoryState.simulationInterval);
+                    return;
+                }
+                simulateAccess();
+            }, interval);
+        }
+
+        function stopSimulation() {
+            virtualMemoryState.simulationRunning = false;
+            if (virtualMemoryState.simulationInterval) {
+                clearInterval(virtualMemoryState.simulationInterval);
+            }
+        }
+
+        function resetVirtualMemory() {
+            stopSimulation();
+            initVirtualMemory();
+        }
+
+        function loadVMDemo(type) {
+            resetVirtualMemory();
+            
+            if (type === 'compare') {
+                for (let i = 0; i < 20; i++) {
+                    setTimeout(() => simulateAccess(), i * 200);
+                }
+            }
+        }
+
+        // Animation speed slider
+        document.getElementById('animation-speed').addEventListener('input', function() {
+            document.getElementById('speed-value').textContent = this.value + 'x';
+        });
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            initPaging();
+        });
+
+        // Canvas hover tooltips
+        function setupCanvasTooltips() {
+            const canvases = ['paging-canvas', 'segmentation-canvas', 'virtual-canvas'];
+            const tooltip = document.getElementById('tooltip');
+
+            canvases.forEach(canvasId => {
+                const canvas = document.getElementById(canvasId);
+                if (!canvas) return;
+
+                canvas.addEventListener('mousemove', (e) => {
+                    const rect = canvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+
+                    // Simple tooltip logic - can be enhanced
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = e.clientX + 10 + 'px';
+                    tooltip.style.top = e.clientY + 10 + 'px';
+                    tooltip.textContent = 'Hover for details';
+                });
+
+                canvas.addEventListener('mouseleave', () => {
+                    tooltip.style.display = 'none';
+                });
+            });
+        }
+
+        window.addEventListener('load', setupCanvasTooltips);
+    </script>
+</body>
+</html>
